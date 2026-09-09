@@ -1,0 +1,68 @@
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+#game-prompt {
+    height: auto;
+    width: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10rem;
+    cursor: pointer;
+}
+
+#player-panel {
+    position: fixed;
+    top: 20px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+#players-div {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+}
+
+#players-div input {
+    width: 100px;
+}
+
+#board {
+    box-sizing: border-box;
+    width: 50vw;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(7, 1fr);
+    gap: 10px;
+    margin: 0 auto;
+}
+
+.chip {
+    background-color: white;
+    border: 2px solid black;
+
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.slot {
+    background-color: black;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+.slot:hover {
+    background-color: red;
+}

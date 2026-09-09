@@ -1,6 +1,7 @@
 const board = document.getElementById('board');
 const playersDiv = document.getElementById('players-div');
 const gamePrompt = document.getElementById('game-prompt');
+const messages = document.getElementById('messages');
 
 
 
@@ -10,7 +11,6 @@ const gamePrompt = document.getElementById('game-prompt');
     else console.log('nada');
 });*/
 
-/* TURNED OFF FOR DEBUGGING -----------------------------------------
 gamePrompt.addEventListener('click', () => {
     const playerOneInput = document.createElement('input'); 
     const nameButton = document.createElement('button');
@@ -20,8 +20,8 @@ gamePrompt.addEventListener('click', () => {
     playersDiv.append(playerOneInput, nameButton, playerTwoInput);
     
     nameButton.addEventListener('click', () => {
-        const PlayerOne = createPlayer(playerOneInput.value, 'red');
-        const PlayerTwo = createPlayer(playerTwoInput.value, 'black');
+        const PlayerOne = new Player(playerOneInput.value, 'red');
+        const PlayerTwo = new Player(playerTwoInput.value, 'black');
         
         if (playerOneInput.value == '') playerOneInput.style.borderColor = 'red';
         else playerOneInput.style.borderColor = 'initial';
@@ -50,18 +50,61 @@ gamePrompt.addEventListener('click', () => {
 
     gamePrompt.remove()
 });
------------------------------------------------------------*/
+
+/* DEBUGGING
 gamePrompt.remove();
-const PlayerOne = createPlayer('V', 'red');
-const PlayerTwo = createPlayer('Bobo', 'black');
+const PlayerOne = new Player('V', 'red');
+const PlayerTwo = new Player('Bobo', 'black');
 mainLoop(PlayerOne, PlayerTwo)
+*/
+
 function mainLoop(PlayerOne, PlayerTwo) {
+    let playing = true;
     const slots = makeSlots();
     const gameBoard = makeBoard();
-    for (let slot of slots) console.log(slot.id);
+    let currentPlayer = PlayerOne;
     document.addEventListener('click', (event) => {
-        console.log(event.target)//.checkSpace());
+        if(playing && slots.find(slot => slot.id === event.target.id)) {
+            let selectedSlot = slots.find(slot => slot.id === event.target.id);
+            if(selectedSlot.checkSpace()) {         
+                let addedPiece = gameBoard.find(piece => (piece.col === selectedSlot.col) && (piece.row === 7-selectedSlot.space));
+                addedPiece = dropPiece(addedPiece, currentPlayer);
+
+                let targetDiv = document.getElementById(addedPiece.id);
+                targetDiv.classList.add(currentPlayer.color);
+
+                selectedSlot.space--;
+                console.log(checkForWin(currentPlayer, gameBoard, addedPiece))
+                if (checkForWin(currentPlayer, gameBoard, addedPiece)) {
+                    // WIN LOGIC
+                    playing = false;
+                    currentPlayer.wins++;
+                    messages.textContent = `${currentPlayer.name} WINS THE GAME`;
+                    //resetGame(PlayerOne, PlayerTwo);
+                } else {
+                    currentPlayer = passTurn(PlayerOne, PlayerTwo, currentPlayer);
+                }
+            }
+        } else {
+            console.log('not slot'); 
+            let x = gameBoard.find(piece => piece.id === event.target.id);
+            console.log(x)
+        }
     });
+}
+
+function resetGame(PlayerOne, PlayerTwo) {
+    const resetButton = document.createElement('button');
+    resetButton.textContent = 'RESTART';
+    messages.append(resetButton);
+
+    resetButton.addEventListener('click', () => {
+        board.innerHTML = '';
+        messages.remove();
+        mainLoop(PlayerOne, PlayerTwo);
+
+    });
+
 }
 
 // ??? --------------------------------------------------
@@ -77,12 +120,13 @@ function Player(name, color) {
     this.wins = 0;
 }
 
-function Piece(player, color, col, row, id) {
+function Piece(player, color, col, row, id, index) {
     this.player = player;
     this.color = color;   
     this.col = col;
     this.row = row;
     this.id = id;
+    this.index = index;
 }
 
 function Slot(col) {
@@ -94,31 +138,21 @@ function Slot(col) {
     }
 }
 
-function createPlayer(name, color) {
-    return {name, color}
-}
-
 function createPiece(player, color, col, row, id) {
     return { player, color, col, row, id };
 }
 
-function createSlot(col) {
-    return { col }
-}
-
-function makePlayers() {
-
-}
-
 function makeBoard() {
     let gameBoard = []
+    let index = 0;
     for (let row = 6; row > 0; row--) {
         for (let col = 0; col < 7; col++) {
             let div = document.createElement('div');
             div.classList.add('chip')
             div.id = `c${col}r${row}`;
             board.append(div);
-            let newPiece = new Piece('blank', 'blank', col, row, div.id);
+            let newPiece = new Piece('blank', 'blank', col, row, div.id, index);
+            index++;
             gameBoard.push(newPiece);
         }
     }
@@ -138,8 +172,129 @@ function makeSlots() {
     return slots;
 } 
 
-//const slots = makeSlots();
-//const gameBoard = makeBoard();
+function dropPiece(Piece, Player) {
+    Piece.player = Player.name;
+    Piece.color = Player.color
+    return Piece;
+}
+
+function passTurn(PlayerOne, PlayerTwo, currentPlayer) {
+    if (currentPlayer === PlayerOne) currentPlayer = PlayerTwo;
+    else if (currentPlayer === PlayerTwo) currentPlayer = PlayerOne;
+    else console.log("it is neither player's turn.");
+    return currentPlayer;
+}
+
+function checkForWin(currentPlayer, gameBoard, addedPiece) {
+    if(checkRow(currentPlayer, gameBoard)) {
+        return true
+    } else if (checkCol(currentPlayer, gameBoard)) {
+        return true;
+    } else if (checkDiagForward(currentPlayer, gameBoard)) {
+        return true;
+    } else if (checkDiagBackward(currentPlayer, gameBoard)) {
+        return true;
+    } else return false;
+}
+
+function checkRow(currentPlayer, gameBoard) {
+    let index = 0;
+    for (let i = 6; i > 0; i--) {
+        let count = 0;
+        for (let j = 0; j < 7; j++) {
+            if (gameBoard[index].player == currentPlayer.name) {
+                count++;
+                if (count === 4) return true;
+            } else {
+                count = 0;
+            }
+            index++;
+        }
+    } return false;
+}
+
+function checkCol(currentPlayer, gameBoard) {
+    let index = 0;
+    for (let j = 0; j < 7; j++) {
+        let count = 0;
+        index = j;
+         for (let i = 6; i > 0; i--) {
+           //console.log(`r${i}c${j} : r${gameBoard[index].row}c${gameBoard[index].col}id${gameBoard[index].id}`)
+            if (gameBoard[index].player === currentPlayer.name) {
+                count++;
+                if (count === 4) return true;
+            } else {
+                count = 0;
+            }
+            index += 7;
+        }
+    } return false;
+}
+
+/* Still too complex
+function recursiveDiagForward(count, index, gameBoard, currentPlayer) {
+    if (gameBoard[index].player === currentPlayer.name) {
+        count += 1;
+        if (index - 8 >= 0) {
+            count += recursiveDiagForward(count, index, gameBoard, currentPlayer);
+        } 
+    } return count;
+}
+*/
+function checkDiagForward(currentPlayer, gameBoard) {
+    let index = 35;
+
+    while (index-18 > 0) {
+        if (gameBoard[index].player === currentPlayer.name 
+            && gameBoard[index-6].player === currentPlayer.name 
+            && gameBoard[index-12].player === currentPlayer.name
+            && gameBoard[index-18].player === currentPlayer.name) {
+            return true; 
+        } 
+        index--;
+    }
+    return false; 
+}
+
+function checkDiagBackward(currentPlayer, gameBoard) {
+    let index = 41;
+
+    while (index-24 > 0) {
+        if (gameBoard[index].player === currentPlayer.name 
+            && gameBoard[index-8].player === currentPlayer.name 
+            && gameBoard[index-16].player === currentPlayer.name
+            && gameBoard[index-24].player === currentPlayer.name) {
+            return true; 
+        } 
+        index--;
+    }
+    return false; 
+}
 
 
-//for (const piece of gameBoard) console.log(piece.id)
+    
+    /* This is me attempting to figure out a logical way
+    of searching diagonally before giving up and going 
+    idiot mode.
+
+    let index = addedPiece.index;
+    let count = 1;
+    console.log(addedPiece.index)
+    if (index > 38) {
+        return false
+    } else if (index < 3) {
+        return false
+    } else {
+        while (index > 0) {
+            if (gameBoard[index-8].player === currentPlayer.name) {
+                count += 1;
+                index -= 8;
+            } 
+        }
+    }
+    for (let i = 6; i > 0; i--) {
+        let count = 0;
+        for (let j = 0; j < 7; j++) {
+
+        }
+    }*/

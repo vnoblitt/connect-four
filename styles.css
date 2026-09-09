@@ -1,4 +1,5 @@
 body {
+    box-sizing: border-box;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -56,13 +57,43 @@ body {
     border-radius: 50%;
 }
 
-.slot {
+.chip.red {
+    background-color: red;
+}
+
+.chip.black {
     background-color: black;
+}
+
+.slot {
+    box-sizing: border-box;
+    background-color: white;
+    border: 5px dotted black;
     width: 50px;
     height: 50px;
     border-radius: 50%;
 }
 
 .slot:hover {
-    background-color: red;
+    box-sizing: border-box;
+    background-color: white;
+    border: 5px dotted black;
+    animation: spin 5s linear infinite;
+}
+
+#messages {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    margin-top: 50px;
+    min-height: 20px;
+}
+
+@keyframes spin {
+  from {
+    rotate: 0turn;
+  }
+  to {
+    rotate: 1turn;
+  }
 }
